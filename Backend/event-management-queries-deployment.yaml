@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.32.0 (HEAD)
+  labels:
+    io.kompose.service: event-management-queries
+  name: event-management-queries
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: event-management-queries
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.32.0 (HEAD)
+      labels:
+        io.kompose.network/backend-em-net: "true"
+        io.kompose.service: event-management-queries
+    spec:
+      containers:
+        - env:
+            - name: DATABASE_URL
+              value: postgresql://postgres:emQueries@db_event_management_queries:5432/db_event_management_queries
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: /secrets/service-account.json
+          image: event-management-queries
+          name: event-management-queries-container
+          ports:
+            - containerPort: 3002
+              hostPort: 3002
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /secrets/service-account.json
+              name: event-management-queries-claim0
+      restartPolicy: Always
+      volumes:
+        - name: event-management-queries-claim0
+          persistentVolumeClaim:
+            claimName: event-management-queries-claim0
